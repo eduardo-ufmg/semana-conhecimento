@@ -1,0 +1,7 @@
+dataset,Accuracy
+Iris,0.8152±0.0511
+Wine,0.9549±0.0376
+ILPD,0.6327±0.0362
+Diabetes,0.7523±0.0097
+German Credit,0.6870±0.0482
+Breast Cancer,0.9314±0.0114
