@@ -1,0 +1,69 @@
+- **KNN**: atribui a uma amostra de teste a classe $y(x_t) = \arg\max\sum_{i \in N \cap Y}K\left(x_t, x_i, h\right)$, onde $N$ é o conjunto dos $k$ vizinhos mais próximos de $x_t$, $Y$ é o conjunto das amostras que pertencem à classe $y$, e $K$ é uma função de similaridade com parâmetro de largura de banda $h$.
+
+- **Problema**: a escolha de $k$ e $h$ é arbitrária e pode afetar significativamente o desempenho do classificador. Delegar, ao usuário, esta tarefa, reduz a autonomia do classificador.
+
+- **Soluções**:
+  - **Estado da arte**: otimizar os parâmetros com a acurácia de validação cruzada cruzada como função objetivo.
+    - **Problema**: é computacionalmente caro, especialmente para grandes conjuntos de dados.
+  - **Arias Garcia, J - 2021**:
+    - construir o Grafo de Gabriel do conjunto de treinamento;
+    - calcular a qualidade $q_i = \frac{\tilde{G_i}}{G_i}$ de cada amostra $x_i$, onde $G_i$ é a quantidade de arestas conectadas a $x_i$ e $\tilde{G_i}$ é a quantidade de arestas que conectam $x_i$ a amostras da mesma classe;
+    - calcular a qualidade $Q_c = \bar{q}_{i \in C}$ de cada classe $C$;
+    - eliminar as amostras $x_i$ cuja qualidade $q_i < Q_{c_i}$, onde $c_i$ é a classe de $x_i$;
+    - construir um novo grafo de Gabriel sobre as amostras restantes;
+    - capturar as amostras conectadas a amostras de outras classes;
+    - usar este novo conjunto como conjunto de treinamento;
+    - assumir que a filtragem foi suficiente para eliminar ruído e outliers. Neste caso, $k = 1$ e $K(x_t, x_i) = 1$
+    - **Problema**: se a filtragem não for suficiente, o desempenho do classificador pode ser prejudicado; a construção do grafo de Gabriel é computacionalmente cara.
+  - **Menezes, M - 2019 (para outro classificador, problema binário)**:
+    - otimizar os parâmetros com a função objetivo $f(X, \Theta) = $
+        - projetar $X$ no espaço de verossimilhança $X'$ no qual $x'_i = \hat{i}_c\sum_{j \in c} K(x_i, x_j, \Theta), \text{para}\ c \in C$, em que $\hat{i}_c$ um vetor unitário que indica o eixo correspondente à classe $c$, e $C$ é o conjunto de classes;
+        - calcular o centroide $\mu_c$ de cada classe $c$ em $X'$;
+        - calcular a distância entre os centroides $d = ||\mu_{c_1} - \mu_{c_2}||$;
+        - calcular a similaridade de cosseno entre os centroides $s = \frac{\mu_{c_1} \cdot \mu_{c_2}}{||\mu_{c_1}|| \cdot ||\mu_{c_2}||}$;
+        - retorna $d\cdot{}s$
+    - **Problema**: no trabalho, não é avaliada para kNN; não é generalizada para problemas multiclasse; em conjuntos muito grandes, pode ser computacionalmente cara.
+
+- **Proposta**:
+  - construir o Grafo de Gabriel do conjunto de treinamento;
+  - tomar as amostras conectadas a amostras de outras classes como o novo conjunto de treinamento;
+  - para $k$, assumir a inferência $k = \sqrt{n}$ (Lall & Sharma - 1996), onde $n$ é o número de amostras no conjunto de treinamento;
+  - para $h$, otimizar a função objetivo $f(X, h) = $
+      - projetar $X$ no espaço de verossimilhança $X'$;
+      - calcular o centroide $\mu_c$ de cada classe $c$ em $X'$;
+      - calcular a distância entre todos os pares de centroides $d_{c_i, c_j} = ||\mu_{c_i} - \mu_{c_j}||, \text{para}\ c_i, c_j \in C, i \neq j$;
+      - calcular a similaridade de cosseno entre todos os pares de centroides $s_{c_i, c_j} = \frac{\mu_{c_i} \cdot \mu_{c_j}}{||\mu_{c_i}|| \cdot ||\mu_{c_j}||}, \text{para}\ c_i, c_j \in C, i \neq j$;
+      - retornar $\frac{1}{|C|}\sum_{i,j} d_{c_i, c_j} \cdot s_{c_i, c_j}$
+  - **Hipoteses**:
+    - a redução do conjunto de treinamento reduz o custo da otimização o suficiente para compensar o custo da construção do grafo de Gabriel;
+    - a função objetivo é menos computacionalmente cara que a validação cruzada;
+    - a função objetivo é um bom preditor da acurácia do classificador.
+
+- **Testes Preliminares**:
+  - datasets: Iris, Wine, ILPD, Diabetes, Bankonte, German Credit, Breast Cancer, Phoneme, Blood Transfusion;
+  - outras abordagens analisadas:
+    - distância média entre amostras de mesma classe como função objetivo $f_2$;
+    - inferência $h = \bar{d_nn}$, onde $\bar{d_nn}$ é a distância média entre cada amostra e sua vizinha mais próxima $h_0$;
+  - classificadores comparados
+    - kNN otimizado por validação cruzada;
+    - kNN otimizado por $f(X, h)$;
+    - kNN otimizado por $f_2(X, h)$;
+    - kNN com $h = h_0$;
+    - kNN-ClAS otimizado por validação cruzada;
+    - kNN-ClAS otimizado por $f(X, h)$;
+    - kNN-ClAS otimizado por $f_2(X, h)$;
+    - kNN-ClAS com $h = h_0$;
+    - NN-ClAS;
+  - somente a acurácia foi avaliada;
+
+- **Resultados e Conclusões Preliminares**:
+  - todos os classificadores alcançaram acurácia aproximadamente similar;
+  - NN-ClAS foi consistentemente pior que os outros classificadores;
+  - kNN e kNN-ClAS alternaram como melhor classificador dependendo do dataset;
+  - as três funções objetivo alternaram como a melhor função objetivo dependendo do dataset;
+  - $h_0$ foi consistentemente uma boa inferência para $h$;
+
+- **Próximos Passos**:
+  - avaliar mais métricas além da acurácia;
+  - avaliar mais datasets, especialmente multiclasse;
+  - buscar relação entre características dos datasets e desempenho dos classificadores e funções objetivo;
